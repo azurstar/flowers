@@ -109,7 +109,7 @@ def main():
                         help='模型类型')
     parser.add_argument('--batch_size', type=int, default=48,
                         help='批次大小')
-    parser.add_argument('--epochs', type=int, default=100,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='训练轮数')
     parser.add_argument('--lr', type=float, default=0.0005,
                         help='学习率')
@@ -234,7 +234,7 @@ def main():
     print("开始训练")
     print("=" * 80)
     
-    patience = 30  # 早停耐心值
+    patience = 100  # 早停耐心值
     patience_counter = 0
     
     for epoch in range(start_epoch, config['num_epochs']):

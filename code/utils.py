@@ -371,6 +371,10 @@ def load_training_history(filepath):
 
 def plot_training_history(history, save_path=None):
     """绘制训练历史曲线"""
+    # 设置英文字体
+    plt.rcParams['font.family'] = 'DejaVu Sans'
+    plt.rcParams['font.size'] = 12
+    
     if isinstance(history, list):
         # 新格式：列表中的字典
         epochs = [h['epoch'] for h in history]
@@ -389,18 +393,18 @@ def plot_training_history(history, save_path=None):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
     
     # 损失曲线
-    ax1.plot(epochs, train_loss, 'b-', label='训练损失')
-    ax1.plot(epochs, val_loss, 'r-', label='验证损失')
-    ax1.set_title('训练和验证损失')
+    ax1.plot(epochs, train_loss, 'b-', label='Train Loss')
+    ax1.plot(epochs, val_loss, 'r-', label='Val Loss')
+    ax1.set_title('Training and Validation Loss')
     ax1.set_xlabel('Epoch')
     ax1.set_ylabel('Loss')
     ax1.legend()
     ax1.grid(True)
     
     # 准确率曲线
-    ax2.plot(epochs, train_acc, 'b-', label='训练准确率')
-    ax2.plot(epochs, val_acc, 'r-', label='验证准确率')
-    ax2.set_title('训练和验证准确率')
+    ax2.plot(epochs, train_acc, 'b-', label='Train Accuracy')
+    ax2.plot(epochs, val_acc, 'r-', label='Val Accuracy')
+    ax2.set_title('Training and Validation Accuracy')
     ax2.set_xlabel('Epoch')
     ax2.set_ylabel('Accuracy (%)')
     ax2.legend()
@@ -410,7 +414,7 @@ def plot_training_history(history, save_path=None):
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"训练历史图已保存到: {save_path}")
+        print(f"Training history plot saved to: {save_path}")
     
     plt.show()
 
@@ -452,15 +456,19 @@ def calculate_metrics(model, dataloader, device, class_to_idx):
 
 def plot_confusion_matrix(cm, class_to_idx, save_path=None):
     """绘制混淆矩阵"""
+    # 设置英文字体
+    plt.rcParams['font.family'] = 'DejaVu Sans'
+    plt.rcParams['font.size'] = 12
+    
     plt.figure(figsize=(12, 10))
     sns.heatmap(cm, annot=False, fmt='d', cmap='Blues')
-    plt.title('混淆矩阵')
-    plt.xlabel('预测标签')
-    plt.ylabel('真实标签')
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
     
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        print(f"混淆矩阵已保存到: {save_path}")
+        print(f"Confusion matrix saved to: {save_path}")
     
     plt.show()
 
