@@ -21,7 +21,6 @@ from PIL import Image, ImageFile
 import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
-from utils import class_mapping
 
 # 允许加载截断的图片
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -63,21 +62,6 @@ class TestDataset(Dataset):
             return self.__getitem__(next_idx)
 
 
-def create_model_resnet18(num_classes=100):
-    """创建ResNet18模型"""
-    model = models.resnet18(pretrained=False)
-    num_features = model.fc.in_features
-    
-    model.fc = nn.Sequential(
-        nn.Dropout(0.5),
-        nn.Linear(num_features, 512),
-        nn.ReLU(),
-        nn.Dropout(0.3),
-        nn.Linear(512, num_classes)
-    )
-    return model
-
-
 def create_model_resnet50(num_classes=100):
     """创建ResNet50模型"""
     model = models.resnet50(pretrained=False)
@@ -106,10 +90,8 @@ def detect_model_type(checkpoint):
         fc1_size = state_dict['fc.1.weight'].shape[1]
         if fc1_size == 2048:
             return 'resnet50'
-        elif fc1_size == 512:
-            return 'resnet18'
     
-    return 'resnet18'
+    return 'resnet50'  # 默认返回resnet50
 
 
 def get_test_transforms():
@@ -145,6 +127,21 @@ def predict(model, dataloader, device):
     return filenames, predictions, confidences
 
 
+def load_class_mapping_from_config(config_path):
+    """从配置文件加载类别映射"""
+    import json
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    
+    # 从配置中提取class_to_idx
+    class_to_idx = config.get('class_to_idx', {})
+    
+    # 创建idx_to_class_id映射
+    idx_to_class_id = {int(idx): int(class_id) for class_id, idx in class_to_idx.items()}
+    
+    return idx_to_class_id, len(class_to_idx)
+
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description='花卉识别预测')
@@ -154,8 +151,10 @@ def main():
     parser.add_argument('output_path', type=str, help='预测结果输出路径 (CSV文件)')
     
     # 可选参数
-    parser.add_argument('--model_path', type=str, default='./model/best_model.pth',
+    parser.add_argument('--model_path', type=str, default=f'{Path(__file__).resolve().parent}/../model/best_model.pth',
                        help='模型文件路径')
+    parser.add_argument('--config_path', type=str, default=f'{Path(__file__).resolve().parent}/../model/config.json',
+                       help='配置文件路径')
     parser.add_argument('--batch_size', type=int, default=64,
                        help='批次大小')
     
@@ -167,6 +166,7 @@ def main():
     print(f"测试集目录: {args.test_img_dir}")
     print(f"输出文件: {args.output_path}")
     print(f"模型路径: {args.model_path}")
+    print(f"配置路径: {args.config_path}")
     
     # 检查文件
     if not os.path.exists(args.test_img_dir):
@@ -177,15 +177,23 @@ def main():
         print(f"错误: 模型文件不存在: {args.model_path}")
         return
     
+    if not os.path.exists(args.config_path):
+        print(f"错误: 配置文件不存在: {args.config_path}")
+        return
+    
     # 设置设备
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"使用设备: {device}")
     
-    # 加载类别映射
-    num_classes = class_mapping['num_classes']
-    idx_to_category_id = {int(k): int(v) for k, v in class_mapping['idx_to_class_id'].items()}
-    
-    print(f"类别数: {num_classes}")
+    # 从配置文件加载类别映射
+    print("\n加载类别映射...")
+    try:
+        idx_to_class_id, num_classes = load_class_mapping_from_config(args.config_path)
+        print(f"✓ 类别映射加载成功")
+        print(f"类别数: {num_classes}")
+    except Exception as e:
+        print(f"错误: 无法加载类别映射: {e}")
+        return
     
     # 加载模型
     print("\n加载模型...")
@@ -196,10 +204,7 @@ def main():
     print(f"模型类型: {model_type.upper()}")
     
     # 创建对应的模型
-    if model_type == 'resnet50':
-        model = create_model_resnet50(num_classes=num_classes)
-    else:
-        model = create_model_resnet18(num_classes=num_classes)
+    model = create_model_resnet50(num_classes=num_classes)
     
     # 加载权重
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -209,6 +214,8 @@ def main():
     print(f"✓ 模型加载成功")
     if 'val_acc' in checkpoint:
         print(f"  验证准确率: {checkpoint['val_acc']:.2f}%")
+    elif 'best_acc' in checkpoint:
+        print(f"  最佳准确率: {checkpoint['best_acc']:.2f}%")
     
     # 加载测试集
     print(f"\n加载测试集...")
@@ -235,7 +242,7 @@ def main():
     filenames, predictions, confidences = predict(model, test_loader, device)
     
     # 转换预测结果：从索引(0-99)转换为真实的category_id
-    category_ids = [idx_to_category_id[pred] for pred in predictions]
+    category_ids = [idx_to_class_id[pred] for pred in predictions]
     
     # 格式化confidence为两位小数
     confidences_formatted = [round(float(conf), 4) for conf in confidences]
