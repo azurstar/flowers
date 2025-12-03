@@ -4,7 +4,7 @@
 [](https://github.com/facebookresearch/dinov2)
 [](https://www.google.com/search?q=)
 
-这是一个基于 **DINOv2 (Vision Transformer)** 的高精度花卉图像分类解决方案。项目针对细粒度分类任务（152类）进行了深度优化，采用了\*\*三阶段渐进式微调（Progressive Fine-Tuning）\*\*策略，在保证极高准确率（\>97.5%）的同时，满足模型体积（\<500MB）和推理速度（\<100ms）的严格工程限制。
+这是一个基于 **DINOv2 (Vision Transformer)** 的高精度花卉图像分类解决方案。项目针对细粒度分类任务（152类）进行了深度优化，采用了 **三阶段渐进式微调（Progressive Fine-Tuning）** 策略，在保证极高准确率（\>97.5%）的同时，满足模型体积（\<500MB）和推理速度（\<100ms）的严格工程限制。
 
 ## ✨ 核心特性
 
@@ -81,10 +81,10 @@ python3 compress_model.py ./output_model/best_model.pth ./output_model/best_mode
 
 ```bash
 # 模式 A: 标准推理 (速度最快，<50ms)
-python3 predict.py ./output_model ./data/test_images results.csv
+python3 predict.py ./data/test_images results.csv
 
 # 模式 B: TTA 增强推理 (精度更高，5-Crop)
-python3 predict.py ./output_model ./data/test_images results_tta.csv --use_tta --tta_level 5
+python3 predict.py ./data/test_images results_tta.csv --use_tta --tta_level 5
 ```
 
 ### 5\. 结果评估

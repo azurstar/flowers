@@ -51,7 +51,7 @@ def main():
     parser.add_argument('test_dir', type=str)
     parser.add_argument('output_csv', type=str)
     # 默认 Batch 32，TTA-5
-    parser.add_argument('--model_dir', type=str, default=f'{Path(__file__).resolve().parent}/../model')
+    parser.add_argument('--model_dir', type=str, default='./model')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--use_tta', action='store_true')
     parser.add_argument('--tta_level', type=int, default=5)
